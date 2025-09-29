@@ -26,6 +26,7 @@ import org.apache.seatunnel.api.table.converter.BasicTypeDefine;
 import org.apache.seatunnel.common.utils.JdbcUrlUtil;
 import org.apache.seatunnel.connectors.seatunnel.jdbc.catalog.AbstractJdbcCatalog;
 import org.apache.seatunnel.connectors.seatunnel.jdbc.catalog.utils.CatalogUtils;
+import org.apache.seatunnel.connectors.seatunnel.jdbc.catalog.utils.DbNameUtils;
 import org.apache.seatunnel.connectors.seatunnel.jdbc.internal.dialect.sqlserver.SqlServerTypeConverter;
 import org.apache.seatunnel.connectors.seatunnel.jdbc.internal.dialect.sqlserver.SqlserverTypeMapper;
 
@@ -71,13 +72,15 @@ public class SqlServerCatalog extends AbstractJdbcCatalog {
 
     @Override
     protected String getDatabaseWithConditionSql(String databaseName) {
-        return String.format(getListDatabaseSql() + "  where name = '%s'", databaseName);
+        return String.format(
+                getListDatabaseSql() + "  where name = '%s'",
+                DbNameUtils.fixBracketsIfNotPresent(databaseName));
     }
 
     @Override
     protected String getTableWithConditionSql(TablePath tablePath) {
         return String.format(
-                getListTableSql(tablePath.getDatabaseName())
+                getListTableSql(DbNameUtils.fixBracketsIfNotPresent(tablePath.getDatabaseName()))
                         + "  and  TABLE_SCHEMA = '%s' and TABLE_NAME = '%s'",
                 tablePath.getSchemaName(),
                 tablePath.getTableName());
@@ -90,8 +93,9 @@ public class SqlServerCatalog extends AbstractJdbcCatalog {
 
     @Override
     protected String getListTableSql(String databaseName) {
+        // fix by ct resolve Scheme query problem.
         return "SELECT TABLE_SCHEMA, TABLE_NAME FROM "
-                + databaseName
+                + DbNameUtils.fixBracketsIfNotPresent(databaseName)
                 + ".INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'";
     }
 
@@ -144,18 +148,20 @@ public class SqlServerCatalog extends AbstractJdbcCatalog {
 
     @Override
     protected String getCreateDatabaseSql(String databaseName) {
-        return String.format("CREATE DATABASE %s", databaseName);
+        return String.format(
+                "CREATE DATABASE %s", DbNameUtils.fixBracketsIfNotPresent(databaseName));
     }
 
     @Override
     protected String getDropDatabaseSql(String databaseName) {
-        return String.format("DROP DATABASE %s;", databaseName);
+        return String.format(
+                "DROP DATABASE %s;", DbNameUtils.fixBracketsIfNotPresent(databaseName));
     }
 
     @Override
     protected void dropDatabaseInternal(String databaseName) throws CatalogException {
         closeDatabaseConnection(databaseName);
-        super.dropDatabaseInternal(databaseName);
+        super.dropDatabaseInternal(DbNameUtils.fixBracketsIfNotPresent(databaseName));
     }
 
     @Override

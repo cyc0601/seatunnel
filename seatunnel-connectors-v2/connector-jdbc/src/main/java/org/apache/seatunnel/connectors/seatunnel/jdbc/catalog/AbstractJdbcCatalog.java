@@ -646,6 +646,7 @@ public abstract class AbstractJdbcCatalog implements Catalog {
     }
 
     protected boolean querySQLResultExists(String dbUrl, String sql) throws SQLException {
+        log.info("enhance by ct,querySQLResultExists URL is >>>{}, SQL is >>{}", dbUrl, sql);
         try (PreparedStatement stmt = getConnection(dbUrl).prepareStatement(sql);
                 ResultSet rs = stmt.executeQuery()) {
             return rs.next();

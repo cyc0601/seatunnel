@@ -17,6 +17,8 @@
 
 package org.apache.seatunnel.connectors.seatunnel.cdc.sqlserver.utils;
 
+import org.apache.seatunnel.connectors.seatunnel.jdbc.catalog.utils.DbNameUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,13 +66,14 @@ public class TableDiscoveryUtils {
             try {
                 jdbc.query(
                         "SELECT * FROM "
-                                + dbName
+                                + DbNameUtils.fixBracketsIfNotPresent(dbName)
                                 + ".INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE';",
                         rs -> {
                             while (rs.next()) {
                                 TableId tableId =
                                         new TableId(
                                                 rs.getString(1), rs.getString(2), rs.getString(3));
+                                LOG.info("tableFilters is {}，tableId is {}", tableFilters, tableId);
                                 if (tableFilters.dataCollectionFilter().isIncluded(tableId)) {
                                     capturedTableIds.add(tableId);
                                     LOG.info("\t including '{}' for further processing", tableId);
@@ -83,7 +86,7 @@ public class TableDiscoveryUtils {
                 // We were unable to execute the query or process the results, so skip this ...
                 LOG.warn(
                         "\t skipping database '{}' due to error reading tables: {}",
-                        dbName,
+                        DbNameUtils.fixBracketsIfNotPresent(dbName),
                         e.getMessage());
             }
         }
